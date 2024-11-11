@@ -87,9 +87,21 @@ function BraveJumpTrait::Perform()
     SetPropEntity(boss, "m_hGroundEntity", null);
     boss.SetAbsVelocity(currentVelocity + newVelocity);
 
-    for(local i = 1; i < jumpCooldown; i++)
+    for(local i = 0; i < jumpCooldown; i++)
     {
-        ClientPrint(boss, 4, "Brave Jump ready in " + (jumpCooldown - i) + " seconds.")
+        RunWithDelay("BraveJumpNotifyJump(" + (jumpCooldown - i) + ")", null, i);
     }
-    ClientPrint(boss, 4, "Brave Jump Ready!")
+    RunWithDelay("BraveJumpNotifyJump(0)", null, jumpCooldown);
+    RunWithDelay("BraveJumpNotifyJump(-1)", null, jumpCooldown + 2);
+}
+
+function BraveJumpNotifyJump(secondsLeft) {
+    local boss = GetBossPlayers()[0];
+    if(secondsLeft < 0) {
+        // TODO: find a way to blank the csay.
+    } else if (secondsLeft == 0) {
+        ClientPrint(boss, 4, "Brave Jump Ready!")
+    } else {
+        ClientPrint(boss, 4, "Brave Jump ready in " + secondsLeft + " seconds.")
+    }
 }
