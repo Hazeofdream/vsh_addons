@@ -1,3 +1,5 @@
+# This mod has been merged into [mega_mod](https://github.com/megascatterbomb/mega_mod)
+
 This is a vscript addon for the Versus Saxton Hale gamemode in Team Fortress 2.
 
 To use this on your community server, simply place all the .nut files inside `/scripts/vscripts/vsh_addons`. No sourcemod required!
