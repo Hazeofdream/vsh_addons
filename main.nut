@@ -43,6 +43,12 @@ IncludeScript("vsh_addons/rps_damage_increase.nut");
 IncludeScript("vsh_addons/anti_afk.nut");
 IncludeScript("vsh_addons/killstreaks.nut");
 IncludeScript("vsh_addons/mighty_slam_fix.nut");
+IncludeScript("vsh_addons/saxton_punch_kills.nut");
+IncludeScript("vsh_addons/heavy_minigun_unnerf.nut");
+IncludeScript("vsh_addons/sentry_damage_buff.nut");
+IncludeScript("vsh_addons/stun_breakout_threshold.nut");
+IncludeScript("vsh_addons/debuff_resistance_removal.nut");
+IncludeScript("vsh_addons/ubersaw_buff.nut");
 IncludeScript("vsh_addons/player_glows.nut");
 IncludeScript("vsh_addons/gardennotify.nut");
 
