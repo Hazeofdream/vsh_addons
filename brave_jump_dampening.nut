@@ -1,5 +1,5 @@
 local jumped = false;
-local jumpCooldown = 3;
+local jumpCooldown = 10;
 local lastDisplayTime = Time()
 
 function BraveJumpTrait::OnFrameTickAlive()
