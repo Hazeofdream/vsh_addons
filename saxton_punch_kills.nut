@@ -13,10 +13,17 @@ SaxtonPunchTrait.damageTaken <- 0;
 SaxtonPunchTrait.lastHealth <- 0;
 SaxtonPunchTrait.punchesUsed <- 0;
 SaxtonPunchTrait.capTimer <- 0;
+SaxtonPunchTrait.lockedUntil <- 0; // Set by sandman_lock.nut. Banked punches are kept while locked.
+
+function SaxtonPunchTrait::IsLocked()
+{
+    return Time() < lockedUntil;
+}
 
 function SaxtonPunchTrait::OnApply()
 {
     meter = -1;
+    lockedUntil = 0;
     damageTaken = 0;
     lastHealth = 0;
     punchesUsed = 0;
@@ -83,6 +90,17 @@ function SaxtonPunchTrait::OnTickAlive(timeDelta)
     if (haleBuff && capTimer < 0)
         capTimer += timeDelta;
 
+    if (IsLocked())
+    {
+        if (meter == 0)
+        {
+            meter = -1;
+            vsh_vscript.Hale_SetRedArm(boss, false);
+            boss.RemoveCond(TF_COND_CRITBOOSTED);
+        }
+        return;
+    }
+
     if (meter < 0 && PunchesReady() > 0)
     {
         meter = 0;
@@ -95,6 +113,9 @@ function SaxtonPunchTrait::OnTickAlive(timeDelta)
 
 function SaxtonPunchTrait::Perform(victim)
 {
+    if (IsLocked())
+        return false;
+
     // Spend the timer punch first so damage-earned punches stay banked.
     if (CapPunchReady())
         capTimer = -haleCapPunchCooldown;
@@ -154,6 +175,8 @@ function SaxtonPunchTrait::Perform(victim)
 
 function SaxtonPunchTrait::MeterAsPercentage()
 {
+    if (IsLocked())
+        return 0;
     if (PunchesReady() > 0)
         return 200;
     return NextPunchProgress() * 90;
@@ -178,7 +201,14 @@ function AbilityHudTrait::OnTickAlive(timeDelta)
         {
             local available = ability.PunchesReady();
             local filled;
-            if (available > 0)
+            if (ability.IsLocked())
+            {
+                // Locked by a Sandman ball: show seconds left on the lock and an empty bar.
+                local secondsLeft = ceil(ability.lockedUntil - Time()).tointeger();
+                progressBarText = BigToSmallNumbers(secondsLeft.tostring()) + " ";
+                filled = 0;
+            }
+            else if (available > 0)
             {
                 progressBarText = BigToSmallNumbers("r") + (available > 1 ? " " + BigToSmallNumbers(available.tostring()) : "") + " ";
                 filled = 7;

@@ -57,6 +57,7 @@ IncludeScript("vsh_addons/sniper_headshot_buff.nut");
 IncludeScript("vsh_addons/sniper_glow.nut");
 IncludeScript("vsh_addons/crossbow_buff.nut");
 IncludeScript("vsh_addons/medigun_parity.nut");
+IncludeScript("vsh_addons/sandman_lock.nut");
 
 // OVERRIDE: Clamp stab damage (and market gardner) to 5000 max
 function CalcStabDamage(victim)

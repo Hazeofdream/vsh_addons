@@ -77,6 +77,12 @@ Changes:
 - Weapons:
   - Market Gardener and Backstab damage (and anything else using `CalcStabDamage()`) capped at 5000.
     - Affects very high playercounts only.
+- Scout:
+  - Sandman balls lock Hale's abilities (Mighty Slam, Sweeping Charge, Saxton Punch and Brave Jump).
+    - The lock scales with how far the ball flew from where it was thrown, up to 8 seconds for a moon shot (2000 units or more).
+    - Point-blank hits (under 200 units) don't lock anything.
+    - A new hit only extends the lock if it's longer than what's left. Banked Saxton Punches are kept.
+    - Chat announces moon shots on Hale.
 - Heavy:
   - Removed VSH's 30% damage penalty on crit-boosted minigun damage.
   - Natascha's slow on hit restored to its stock value (VSH reduced it).
