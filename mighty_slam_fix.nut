@@ -9,8 +9,22 @@ function MightySlamTrait::Perform()
     BossPlayViewModelAnim(boss, "vsh_slam_land");
     local weapon = boss.GetActiveWeapon();
     SetItemId(weapon, 444); //Mantreads
-    CreateAoE(boss.GetCenter(), 500,
+    local slamCenter = boss.GetCenter();
+    local canSee = function (target) {
+        // MASK_OPAQUE: only world geometry/props that block sight, so players and see-through surfaces don't block the slam
+        local trace = {
+            start = slamCenter,
+            end = target.GetCenter(),
+            mask = 16513,
+            ignore = bossLocal
+        };
+        TraceLineEx(trace);
+        return !trace.hit || trace.enthit == target;
+    };
+    CreateAoE(slamCenter, 500,
         function (target, deltaVector, distance) {
+            if (!canSee(target))
+                return;
             local damage = target.GetMaxHealth() * (1 - distance / 500);
             if (!target.IsPlayer())
                 damage *= 2;
@@ -26,6 +40,8 @@ function MightySlamTrait::Perform()
                 DMG_BLAST);
         }
         function (target, deltaVector, distance) {
+            if (!canSee(target))
+                return;
             local pushForce = distance < 100 ? 1 : 100 / distance;
             deltaVector.x = deltaVector.x * 1250 * pushForce;
             deltaVector.y = deltaVector.y * 1250 * pushForce;

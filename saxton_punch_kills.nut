@@ -1,27 +1,89 @@
-local saxtonPunchKillsRequired = 5;
+local punchIntervalLowHealth = 0.5;   // Fraction of max HP Hale must lose per punch, while max HP is at or under the threshold.
+local punchIntervalHighHealth = 0.3;  // Fraction of max HP per punch once max HP is above the threshold.
+local highHealthThreshold = 10000;
+local haleCapPunchCooldown = 60;       // Once Hale captures the point, he also gets a punch every this many seconds.
 
-// OVERRIDE: Saxton Punch charges from kills instead of a 30s timer.
-// meter counts up from -saxtonPunchKillsRequired to 0 (ready), one per kill.
+// OVERRIDE: Saxton Punch charges from damage Hale takes instead of a 30s timer.
+// Every punchInterval of max HP lost earns one punch. Punches bank: if Hale earns two before using
+// one, he can throw both. Healing doesn't take progress away.
+// After Hale captures the point (haleBuff), he also gets a free punch every haleCapPunchCooldown seconds.
+// meter stays 0 while a punch is ready and -1 otherwise, so base code that checks meter still works.
+
+SaxtonPunchTrait.damageTaken <- 0;
+SaxtonPunchTrait.lastHealth <- 0;
+SaxtonPunchTrait.punchesUsed <- 0;
+SaxtonPunchTrait.capTimer <- 0;
 
 function SaxtonPunchTrait::OnApply()
 {
-    meter = -saxtonPunchKillsRequired;
+    meter = -1;
+    damageTaken = 0;
+    lastHealth = 0;
+    punchesUsed = 0;
+    capTimer = -haleCapPunchCooldown;
     if (!(player in hudAbilityInstances))
         hudAbilityInstances[player] <- [];
     hudAbilityInstances[player].push(this);
 }
 
-function SaxtonPunchTrait::OnTickAlive(timeDelta)
+function SaxtonPunchTrait::PunchInterval()
 {
-    // No passive recharge.
+    local maxHp = boss.GetMaxHealth();
+    return maxHp * (maxHp > highHealthThreshold ? punchIntervalHighHealth : punchIntervalLowHealth);
 }
 
-function SaxtonPunchTrait::OnKill(victim, params)
+function SaxtonPunchTrait::PunchesAvailable()
 {
-    if (meter >= 0 || victim == player || !IsPlayerAlive(boss))
+    return floor(damageTaken / PunchInterval()).tointeger() - punchesUsed;
+}
+
+// Progress toward the next punch, 0.0 to 1.0.
+function SaxtonPunchTrait::PunchProgress()
+{
+    local interval = PunchInterval();
+    return (damageTaken - floor(damageTaken / interval) * interval) / interval;
+}
+
+function SaxtonPunchTrait::CapPunchReady()
+{
+    return haleBuff && capTimer >= 0;
+}
+
+// Total punches ready right now, from damage and from the post-capture timer.
+function SaxtonPunchTrait::PunchesReady()
+{
+    return PunchesAvailable() + (CapPunchReady() ? 1 : 0);
+}
+
+// Progress toward whichever punch source fills first, 0.0 to 1.0.
+function SaxtonPunchTrait::NextPunchProgress()
+{
+    local progress = PunchProgress();
+    if (haleBuff)
+    {
+        local capProgress = 1.0 + capTimer / haleCapPunchCooldown;
+        if (capProgress > progress)
+            progress = capProgress;
+    }
+    return progress;
+}
+
+function SaxtonPunchTrait::OnTickAlive(timeDelta)
+{
+    local health = boss.GetHealth();
+    if (IsRoundSetup())
+    {
+        lastHealth = health;
         return;
-    meter++;
-    if (meter >= 0)
+    }
+    if (lastHealth > 0 && health < lastHealth)
+        damageTaken += lastHealth - health;
+    lastHealth = health;
+
+    if (haleBuff && capTimer < 0)
+        capTimer += timeDelta;
+
+    if (meter < 0 && PunchesReady() > 0)
     {
         meter = 0;
         vsh_vscript.Hale_SetRedArm(boss, true);
@@ -33,16 +95,25 @@ function SaxtonPunchTrait::OnKill(victim, params)
 
 function SaxtonPunchTrait::Perform(victim)
 {
-    if (meter != 0)
+    // Spend the timer punch first so damage-earned punches stay banked.
+    if (CapPunchReady())
+        capTimer = -haleCapPunchCooldown;
+    else if (PunchesAvailable() > 0)
+        punchesUsed++;
+    else
         return false;
-    meter = -saxtonPunchKillsRequired;
 
-    vsh_vscript.Hale_SetRedArm(boss, false);
+    // Keep the red arm and crits if another punch is still banked.
+    if (PunchesReady() <= 0)
+    {
+        meter = -1;
+        vsh_vscript.Hale_SetRedArm(boss, false);
+        boss.RemoveCond(TF_COND_CRITBOOSTED);
+    }
 
     local haleEyeVector = boss.EyeAngles().Forward();
     haleEyeVector.Norm();
 
-    boss.RemoveCond(TF_COND_CRITBOOSTED);
     EmitSoundOn("TFPlayer.CritHit", boss);
     EmitSoundOn("vsh_sfx.saxton_punch", boss);
     if (GetAliveMercCount() > 1)
@@ -81,21 +152,15 @@ function SaxtonPunchTrait::Perform(victim)
     return true;
 }
 
-// Update the meter to show kills remaining
-
 function SaxtonPunchTrait::MeterAsPercentage()
 {
-    if (meter < 0)
-        return (saxtonPunchKillsRequired + meter) * 90 / saxtonPunchKillsRequired;
-    return 200;
+    if (PunchesReady() > 0)
+        return 200;
+    return NextPunchProgress() * 90;
 }
 
-function SaxtonPunchTrait::KillsDone()
-{
-    return saxtonPunchKillsRequired + meter;
-}
-
-// OVERRIDE: Ability HUD. Punch slot shows "kills/required" and one pip per kill, e.g. "2/5 ▰▰▱▱▱".
+// OVERRIDE: Ability HUD. Punch slot shows % progress to the next punch, e.g. "₃₇ ▰▰▱▱▱▱▱",
+// or a check mark plus the banked count when ready, e.g. "✔ ₂ ▰▰▰▰▰▰▰".
 
 function AbilityHudTrait::OnTickAlive(timeDelta)
 {
@@ -109,15 +174,23 @@ function AbilityHudTrait::OnTickAlive(timeDelta)
         local percentage = ability.MeterAsPercentage();
         local progressBarText;
         // SaxtonPunchTrait isn't visible from inside class methods at runtime, so detect it by its method.
-        if ("KillsDone" in ability)
+        if ("PunchProgress" in ability)
         {
-            local killsDone = ability.KillsDone();
-            if (killsDone >= saxtonPunchKillsRequired)
-                progressBarText = BigToSmallNumbers("r") + " ";
+            local available = ability.PunchesReady();
+            local filled;
+            if (available > 0)
+            {
+                progressBarText = BigToSmallNumbers("r") + (available > 1 ? " " + BigToSmallNumbers(available.tostring()) : "") + " ";
+                filled = 7;
+            }
             else
-                progressBarText = format("%d/%d ", killsDone, saxtonPunchKillsRequired);
-            for(local i = 0; i < saxtonPunchKillsRequired; i++)
-                progressBarText += i < killsDone ? "▰" : "▱";
+            {
+                local progress = ability.NextPunchProgress();
+                progressBarText = BigToSmallNumbers((progress * 100).tointeger().tostring()) + " ";
+                filled = (progress * 7).tointeger();
+            }
+            for(local i = 0; i < 7; i++)
+                progressBarText += i < filled ? "▰" : "▱";
         }
         else
         {

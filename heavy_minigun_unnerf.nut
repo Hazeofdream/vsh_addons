@@ -3,7 +3,7 @@
 //  - heavy_natasha_nerf.nut: Natascha slow on hit reduced to 0.15
 // Pushed after the base traits, so OnApply runs after theirs.
 
-local minigunCritNerf = 0.3;
+local minigunCritNerf = 0.7;
 
 characterTraitsClasses.push(class extends CharacterTrait
 {

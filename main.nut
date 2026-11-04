@@ -49,8 +49,14 @@ IncludeScript("vsh_addons/sentry_damage_buff.nut");
 IncludeScript("vsh_addons/stun_breakout_threshold.nut");
 IncludeScript("vsh_addons/debuff_resistance_removal.nut");
 IncludeScript("vsh_addons/ubersaw_buff.nut");
+IncludeScript("vsh_addons/demo_shield_regen.nut");
 IncludeScript("vsh_addons/player_glows.nut");
 IncludeScript("vsh_addons/gardennotify.nut");
+IncludeScript("vsh_addons/razorback.nut");
+IncludeScript("vsh_addons/sniper_headshot_buff.nut");
+IncludeScript("vsh_addons/sniper_glow.nut");
+IncludeScript("vsh_addons/crossbow_buff.nut");
+IncludeScript("vsh_addons/medigun_parity.nut");
 
 // OVERRIDE: Clamp stab damage (and market gardner) to 5000 max
 function CalcStabDamage(victim)

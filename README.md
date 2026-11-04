@@ -26,6 +26,9 @@ New Features:
   - Mercs can be seen when they're the last merc standing or when Hale caps the point.
   - Hale can be seen through walls when facing the last merc or when mercs cap the point.
   - Prevents that one guy from hiding in a corner for the whole round.
+  - Sniper rifle hits make Hale glow through walls (see Sniper below).
+- Backstab and Market Garden announcements:
+  - A chat message is shown to everyone when a player backstabs or market gardens Hale.
 
 Changes:
 - Legend:
@@ -49,7 +52,18 @@ Changes:
     | 24+        | $H = 2000(N-23) + 24000$                  |
 
 - Brave Jump:
-  - Added a 3 second cooldown. Has a supporting hud element.
+  - Added a 5 second cooldown. Has a supporting hud element.
+- Saxton Punch:
+  - Charges from damage Hale takes instead of a 30 second timer.
+    - One punch for every $0.5H$ of damage taken while $H \le 10000$.
+    - One punch for every $0.3H$ of damage taken while $H > 10000$.
+  - Punches bank: if Hale earns a second punch before using the first, he can throw both.
+  - Healing doesn't remove progress.
+  - The hud shows the progress to the next punch as a percentage, or a check mark and the number of banked punches when ready.
+- Stun breakout:
+  - Hale breaks out of a stun after 2 seconds (was 4) or after losing 3000 health while stunned (was 1000).
+- Debuff resistance:
+  - Removed. Jarate and Marked for Death now last their full duration on Hale instead of half.
 - Round timer:
   - Setup Time:
     - Extended for high player counts so players can spread out and/or recover from large lag spikes.
@@ -63,16 +77,38 @@ Changes:
 - Weapons:
   - Market Gardener and Backstab damage (and anything else using `CalcStabDamage()`) capped at 5000.
     - Affects very high playercounts only.
+- Heavy:
+  - Removed VSH's 30% damage penalty on crit-boosted minigun damage.
+  - Natascha's slow on hit restored to its stock value (VSH reduced it).
+- Engineer:
+  - Sentries deal 80% damage to Hale (was 50%).
+  - Mini-Sentries deal 100% damage to Hale (was 80%).
+- Medic:
+  - Ubersaw adds 50% ÜberCharge per hit (was 25%).
+  - Crusader's Crossbow:
+    - All shots are critical.
+    - Every bolt that hits Hale adds 15% ÜberCharge. Doesn't extend an Über that is already running.
+  - Medi Gun and Kritzkrieg are functionally the same, apart from the Über type:
+    - Both build ÜberCharge at the same rate (VSH's 2x).
+    - Both always last the full 8 seconds. Switching heal targets no longer drains the Über faster.
+- Demoman:
+  - The shield comes back after collecting 6 heads since it was broken.
+- Sniper:
+  - Headshots deal 1.8x damage to Hale (was 1.2x).
+  - The Razorback blocks one hit from Hale completely.
+    - It recharges when the Sniper picks up a medium or large ammo pack.
+  - Sniper rifle hits make Hale glow for up to 8 seconds, scaling with damage dealt (500 damage gives the full 8 seconds). Hits stack up to the cap.
 - Rock-Paper-Scissors:
   - Deals 1 million damage to Hale.
     - The default value is only 100k; not enough to cover the maximum possible Hale health.
   - Comically high knockback on Hale's ragdoll when he dies.
 - Mighty Slam:
   - Fixed check to prevent low damage (<=30) hits killing low health (<=30) players.
+  - No longer hits players through walls. The slam needs a clear line of sight to each target.
 - Control Point:
   - Capturing the point no longer instantly ends the round:
     - If RED caps, they get guaranteed crits on all weapons and a powerful 5 second health regen.
-    - If Hale caps, the cooldown on all of his special abilities is reduced to 5 seconds.
+    - If Hale caps, his abilities recharge faster: Mighty Slam every 12 seconds, Sweeping Charge every 6 seconds, and a free Saxton Punch every 60 seconds on top of the ones earned from damage.
   - On capture, the stalemate timer is disabled entirely and the point locks itself permanently.
   - The round will eventually end due to Hale's health changing over time:
     - When RED caps, Hale's health will tick down faster and faster. This guarantees his death if he doesn't manage to kill all of RED team first.
