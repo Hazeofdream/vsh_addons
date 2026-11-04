@@ -1,4 +1,4 @@
-# This mod has been merged into [mega_mod](https://github.com/megascatterbomb/mega_mod)
+# This is a fork of [vsh_addons](https://github.com/megascatterbomb/vsh_addons)
 
 This is a vscript addon for the Versus Saxton Hale gamemode in Team Fortress 2.
 
